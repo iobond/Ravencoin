@@ -92,6 +92,7 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 
     /** RVN START */
     connect(assetsPage, SIGNAL(message(QString,QString,unsigned int)), this, SIGNAL(message(QString,QString,unsigned int)));
+    connect(overviewPage, SIGNAL(assetClicked(QModelIndex)), assetsPage, SLOT(focusAsset(QModelIndex)));
     /** RNV END */
 }
 
@@ -105,6 +106,9 @@ void WalletView::setRavenGUI(RavenGUI *gui)
     {
         // Clicking on a transaction on the overview page simply sends you to transaction history page
         connect(overviewPage, SIGNAL(transactionClicked(QModelIndex)), gui, SLOT(gotoHistoryPage()));
+
+        // Clicking on a asset on the overviewpage simply sends you to the assets page
+        connect(overviewPage, SIGNAL(assetClicked(QModelIndex)), gui, SLOT(gotoAssetsPage()));
 
         // Receive and report messages
         connect(this, SIGNAL(message(QString,QString,unsigned int)), gui, SLOT(message(QString,QString,unsigned int)));

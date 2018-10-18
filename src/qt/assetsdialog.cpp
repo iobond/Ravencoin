@@ -16,6 +16,7 @@
 #include "platformstyle.h"
 #include "sendassetsentry.h"
 #include "walletmodel.h"
+#include "assettablemodel.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -963,6 +964,22 @@ void AssetsDialog::processNewTransaction()
         {
             entry->refreshAssetList();
         }
+    }
+}
+
+void AssetsDialog::focusAsset(const QModelIndex &idx)
+{
+
+    clear();
+
+    SendAssetsEntry *entry = qobject_cast<SendAssetsEntry*>(ui->entries->itemAt(0)->widget());
+    if(entry)
+    {
+        SendAssetsRecipient recipient;
+        recipient.assetName = idx.data(AssetTableModel::AssetNameRole).toString();
+
+        entry->setValue(recipient);
+        entry->setFocus();
     }
 }
 /** RVN END */

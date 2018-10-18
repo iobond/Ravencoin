@@ -103,6 +103,7 @@ private Q_SLOTS:
     void reissueAssetButtonClicked();
     void mineButtonClicked();
     void assetControlUpdateSendCoinsDialog();
+    void focusAsset(const QModelIndex& index);
     /** RVN END */
 
     Q_SIGNALS:

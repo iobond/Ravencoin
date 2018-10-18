@@ -16,6 +16,7 @@
 #include "transactiontablemodel.h"
 #include "assettablemodel.h"
 #include "walletmodel.h"
+#include "assetrecord.h"
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
@@ -24,6 +25,10 @@
 
 #define DECORATION_SIZE 54
 #define NUM_ITEMS 5
+
+#include <QDebug>
+#include <QGraphicsDropShadowEffect>
+#include <QScrollBar>
 
 class TxViewDelegate : public QAbstractItemDelegate
 {
@@ -113,6 +118,95 @@ public:
     const PlatformStyle *platformStyle;
 
 };
+
+class AssetViewDelegate : public QAbstractItemDelegate
+{
+Q_OBJECT
+public:
+    explicit AssetViewDelegate(const PlatformStyle *_platformStyle, QObject *parent=nullptr):
+            QAbstractItemDelegate(parent), unit(RavenUnits::RVN),
+            platformStyle(_platformStyle)
+    {
+
+    }
+
+    inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
+                      const QModelIndex &index ) const
+    {
+        painter->save();
+
+        /** Get the icon for the administrator of the asset */
+        QPixmap pixmap = qvariant_cast<QPixmap>(index.data(Qt::DecorationRole));
+
+        /** Need to know the heigh to the pixmap. If it is 0 we don't we dont own this asset so dont have room for the icon */
+        int nIconSize = pixmap.height();
+        int extraNameSpacing = 12;
+        if (nIconSize)
+            extraNameSpacing = 0;
+
+        /** Get basic padding and half height */
+        QRect mainRect = option.rect;
+        int xspace = nIconSize + 32;
+        int ypad = 6;
+        int halfheight = (mainRect.height() - 2*ypad)/2;
+
+        /** Create the three main rectangles  (Icon, Name, Amount) */
+        QRect assetAdministratorRect(QPoint(20, mainRect.top() + halfheight/2 - ypad/2), QSize(nIconSize, nIconSize));
+        QRect assetNameRect(mainRect.left() + xspace - extraNameSpacing, mainRect.top()+ypad+(halfheight/2), mainRect.width() - xspace, halfheight);
+        QRect amountRect(mainRect.left() + xspace, mainRect.top()+ypad+(halfheight/2), mainRect.width() - xspace - 16, halfheight);
+
+        /** Paint the background */
+        QPixmap background = qvariant_cast<QPixmap>(index.data(AssetTableModel::BackgroundRole));
+        painter->drawPixmap(mainRect, background);
+
+        /** Draw asset administrator icon */
+        if (nIconSize)
+            painter->drawPixmap(assetAdministratorRect, pixmap);
+
+        /** Create the font that is used for painting the asset name */
+        QFont nameFont;
+        nameFont.setFamily("SFProText"); // TODO use a different font, not a mac font
+        nameFont.setPixelSize(18);
+        nameFont.setWeight(400);
+        nameFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.4);
+
+        /** Create the font that is used for painting the asset amount */
+        QFont amountFont;
+        amountFont.setFamily("SFProText"); // TODO use a different font, not a mac font
+        amountFont.setPixelSize(14);
+        amountFont.setWeight(600);
+        amountFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.3);
+
+        /** Get the name and formatted amount from the data */
+        QString name = index.data(AssetTableModel::AssetNameRole).toString();
+        QString amountText = index.data(AssetTableModel::FormattedAmountRole).toString();
+
+        /** Paint the asset name */
+        QRect boundingRect;
+        QPen penAssetName(QColor("#ffffff"), 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+        painter->setPen(penAssetName);
+        painter->setFont(nameFont);
+        painter->drawText(assetNameRect, Qt::AlignLeft|Qt::AlignVCenter, name, &boundingRect);
+
+        /** Paint the amount */
+        QPen penAmount(QColor("#ffffff"), 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+        painter->setPen(penAmount);
+        painter->setFont(amountFont);
+        painter->setOpacity(0.65);
+        painter->drawText(amountRect, Qt::AlignRight|Qt::AlignVCenter, amountText);
+
+        painter->restore();
+    }
+
+    inline QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+    {
+        return QSize(42, 42);
+    }
+
+    int unit;
+    const PlatformStyle *platformStyle;
+
+};
 #include "overviewpage.moc"
 #include "ravengui.h"
 
@@ -127,7 +221,8 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     currentWatchOnlyBalance(-1),
     currentWatchUnconfBalance(-1),
     currentWatchImmatureBalance(-1),
-    txdelegate(new TxViewDelegate(platformStyle, this))
+    txdelegate(new TxViewDelegate(platformStyle, this)),
+    assetdelegate(new AssetViewDelegate(platformStyle, this))
 {
     ui->setupUi(this);
 
@@ -137,7 +232,6 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->labelTransactionsStatus->setIcon(icon);
     ui->labelWalletStatus->setIcon(icon);
     ui->labelAssetStatus->setIcon(icon);
-    ui->labelAssetAdministrator->setPixmap(QPixmap::fromImage(QImage(":/icons/asset_administrator")));
 
     // Recent transactions
     ui->listTransactions->setItemDelegate(txdelegate);
@@ -145,13 +239,115 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->listTransactions->setMinimumHeight(NUM_ITEMS * (DECORATION_SIZE + 2));
     ui->listTransactions->setAttribute(Qt::WA_MacShowFocusRect, false);
 
+    /** Create the list of assets */
+    ui->listAssets->setItemDelegate(assetdelegate);
+    ui->listAssets->setIconSize(QSize(42, 42));
+    ui->listAssets->setMinimumHeight(5 * (42 + 2));
+    ui->listAssets->viewport()->setAutoFillBackground(false);
+    ui->listAssets->verticalScrollBar()->setStyleSheet(QString::fromUtf8("QScrollBar:vertical {"
+                                                                         "        width: 10px;"
+                                                                         "        margin: 0 0 0 0;"
+                                                                         "}"
+                                                                         "QScrollBar::handle:vertical {"
+                                                                         "            height: 5px;"
+                                                                         "            background: #999999;"
+                                                                         "}"
+                                                                         "QScrollBar::add-line:vertical {"
+                                                                         "                        background: none;"
+                                                                         "                        height: 20px;"
+                                                                         "                        subcontrol-position: bottom;"
+                                                                         "                        subcontrol-origin: margin;"
+                                                                         "}"
+                                                                         "QScrollBar::sub-line:vertical {"
+                                                                         "                        background: none;"
+                                                                         "                        height: 20px;"
+                                                                         "                        subcontrol-position: top;"
+                                                                         "                        subcontrol-origin: margin;"
+                                                                         "}"
+
+    ));
+
     connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SLOT(handleTransactionClicked(QModelIndex)));
+    connect(ui->listAssets, SIGNAL(clicked(QModelIndex)), this, SLOT(handleAssetClicked(QModelIndex)));
 
     // start with displaying the "out of sync" warnings
     showOutOfSyncWarning(true);
     connect(ui->labelWalletStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelAssetStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
+
+    /** Set the overview page background colors, and the frames colors and padding */
+    ui->assetFrame->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px;");
+    ui->frame->setStyleSheet("background-color: white; padding-bottom: 10px; padding-right: 5px;");
+    ui->frame_2->setStyleSheet("background-color: white; padding-left: 5px;");
+
+    ui->verticalLayout_2->setSpacing(10);
+    ui->verticalLayout_3->setSpacing(10);
+
+    /** Create the shadow effects on the frames */
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(QColor(0, 0, 0, 160));
+    bodyShadow->setOffset(4.0);
+
+    QGraphicsDropShadowEffect *bodyShadow2 = new QGraphicsDropShadowEffect;
+    bodyShadow2->setBlurRadius(9.0);
+    bodyShadow2->setColor(QColor(0, 0, 0, 160));
+    bodyShadow2->setOffset(4.0);
+
+    QGraphicsDropShadowEffect *bodyShadow3 = new QGraphicsDropShadowEffect;
+    bodyShadow3->setBlurRadius(9.0);
+    bodyShadow3->setColor(QColor(0, 0, 0, 160));
+    bodyShadow3->setOffset(4.0);
+
+    ui->assetFrame->setGraphicsEffect(bodyShadow);
+    ui->frame->setGraphicsEffect(bodyShadow2);
+    ui->frame_2->setGraphicsEffect(bodyShadow3);
+
+    /** Update the labels colors */
+    ui->assetBalanceLabel->setStyleSheet("color: #4960ad");
+    ui->rvnBalancesLabel->setStyleSheet("color: #4960ad");
+    ui->labelBalanceText->setStyleSheet("color: #4960ad");
+    ui->labelPendingText->setStyleSheet("color: #4960ad");
+    ui->labelImmatureText->setStyleSheet("color: #4960ad");
+    ui->labelTotalText->setStyleSheet("color: #4960ad");
+    ui->labelSpendable->setStyleSheet("color: #4960ad");
+    ui->labelWatchonly->setStyleSheet("color: #4960ad");
+    ui->recentTransactionsLabel->setStyleSheet("color: #4960ad");
+
+    /** Create the search bar for assets */
+    ui->assetSearch->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->assetSearch->setStyleSheet("border: 1px solid #4960ad; border-radius: 5px;");
+    ui->assetSearch->setAlignment(Qt::AlignVCenter);
+    QFont font = ui->assetSearch->font();
+    font.setPointSize(12);
+    ui->assetSearch->setFont(font);
+
+    QFontMetrics fm = QFontMetrics(ui->assetSearch->font());
+    ui->assetSearch->setFixedHeight(fm.height()+ 5);
+    ui->assetSearch->setTextMargins(0,(-(fm.height() + 5) / 2), 0, 0);
+
+
+    /** Setup the asset info grid labels and values */
+    ui->assetInfoTitleLabel->setText("<b>" + tr("Asset Activation Status") + "</b>");
+    ui->assetInfoPercentageLabel->setText(tr("Current Percentage") + ":");
+    ui->assetInfoStatusLabel->setText(tr("Status") + ":");
+    ui->assetInfoBlockLabel->setText(tr("Target Percentage") + ":");
+    ui->assetInfoPossibleLabel->setText(tr("Could Vote Pass") + ":");
+    ui->assetInfoBlocksLeftLabel->setText(tr("Voting Block Cycle") + ":");
+
+    ui->assetInfoTitleLabel->setStyleSheet("background-color: transparent");
+    ui->assetInfoPercentageLabel->setStyleSheet("background-color: transparent");
+    ui->assetInfoStatusLabel->setStyleSheet("background-color: transparent");
+    ui->assetInfoBlockLabel->setStyleSheet("background-color: transparent");
+    ui->assetInfoPossibleLabel->setStyleSheet("background-color: transparent");
+    ui->assetInfoBlocksLeftLabel->setStyleSheet("background-color: transparent");
+
+    ui->assetInfoPercentageValue->setStyleSheet("background-color: transparent");
+    ui->assetInfoStatusValue->setStyleSheet("background-color: transparent");
+    ui->assetInfoBlockValue->setStyleSheet("background-color: transparent");
+    ui->assetInfoPossibleValue->setStyleSheet("background-color: transparent");
+    ui->assetInfoBlocksLeftValue->setStyleSheet("background-color: transparent");
 
     // Trigger the call to show the assets table if assets are active
     showAssets();
@@ -161,6 +357,12 @@ void OverviewPage::handleTransactionClicked(const QModelIndex &index)
 {
     if(filter)
         Q_EMIT transactionClicked(filter->mapToSource(index));
+}
+
+void OverviewPage::handleAssetClicked(const QModelIndex &index)
+{
+    if(assetFilter)
+            Q_EMIT assetClicked(assetFilter->mapToSource(index));
 }
 
 void OverviewPage::handleOutOfSyncWarningClicks()
@@ -247,6 +449,11 @@ void OverviewPage::setWalletModel(WalletModel *model)
         assetFilter.reset(new QSortFilterProxyModel());
         assetFilter->setSourceModel(model->getAssetTableModel());
         ui->listAssets->setModel(assetFilter.get());
+        ui->listAssets->setAutoFillBackground(false);
+
+        ui->assetVerticalSpaceWidget->setStyleSheet("background-color: transparent");
+        ui->assetVerticalSpaceWidget2->setStyleSheet("background-color: transparent");
+
 
         // Keep up to date with wallet
         setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(),
@@ -261,7 +468,6 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
     // update the display unit, to not use the default ("RVN")
     updateDisplayUnit();
-    ui->listAssets->resizeColumnsToContents();
 }
 
 void OverviewPage::updateDisplayUnit()
@@ -297,21 +503,21 @@ void OverviewPage::showOutOfSyncWarning(bool fShow)
 void OverviewPage::showAssets()
 {
     if (AreAssetsDeployed()) {
-        ui->listAssets->show();
+        ui->assetFrame->show();
         ui->assetBalanceLabel->show();
         ui->labelAssetStatus->show();
-        ui->labelAssetAdministrator->show();
 
         // Disable the vertical space so that listAssets goes to the bottom of the screen
-        ui->assetVeriticalSpaceWidget->hide();
+        ui->assetVerticalSpaceWidget->hide();
+        ui->assetVerticalSpaceWidget2->hide();
     } else {
+        ui->assetFrame->hide();
         ui->assetBalanceLabel->hide();
         ui->labelAssetStatus->hide();
-        ui->listAssets->hide();
-        ui->labelAssetAdministrator->hide();
 
         // This keeps the RVN balance grid from expanding and looking terrible when asset balance is hidden
-        ui->assetVeriticalSpaceWidget->show();
+        ui->assetVerticalSpaceWidget->show();
+        ui->assetVerticalSpaceWidget2->show();
     }
 
     displayAssetInfo();
@@ -319,13 +525,6 @@ void OverviewPage::showAssets()
 
 void OverviewPage::displayAssetInfo()
 {
-    ui->assetInfoTitleLabel->setText("<b>" + tr("Asset Activation Status") + "</b>");
-    ui->assetInfoPercentageLabel->setText(tr("Current Percentage") + ":");
-    ui->assetInfoStatusLabel->setText(tr("Status") + ":");
-    ui->assetInfoBlockLabel->setText(tr("Target Percentage") + ":");
-    ui->assetInfoPossibleLabel->setText(tr("Could Vote Pass") + ":");
-    ui->assetInfoBlocksLeftLabel->setText(tr("Voting Block Cycle") + ":");
-
     const ThresholdState thresholdState = VersionBitsTipState(Params().GetConsensus(),
                                                               Consensus::DeploymentPos::DEPLOYMENT_ASSETS);
     auto startTime = Params().GetConsensus().vDeployments[Consensus::DeploymentPos::DEPLOYMENT_ASSETS].nStartTime * 1000;

@@ -224,6 +224,12 @@ void SendAssetsEntry::setValue(const SendAssetsRecipient &value)
 
         ui->payAmount->setValue(recipient.amount / COIN);
     }
+
+    if (recipient.assetName != "") {
+        int index = ui->assetSelectionBox->findText(recipient.assetName);
+        ui->assetSelectionBox->setCurrentIndex(index);
+        onAssetSelected(index);
+    }
 }
 
 void SendAssetsEntry::setAddress(const QString &address)
