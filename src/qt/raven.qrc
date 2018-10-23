@@ -60,6 +60,7 @@
         <file alias="rectangle">res/icons/rectangle.png</file>
         <file alias="bluerectangle">res/icons/bluerectangle.png</file>
         <file alias="svgrectangle">res/icons/rectanglesvg.svg</file>
+        <file alias="ravencointext">res/icons/ravencointext.svg</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>

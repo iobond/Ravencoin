@@ -266,6 +266,7 @@ RES_ICONS = \
   qt/res/icons/rectangle.png \
   qt/res/icons/rectanglesvg.svg \
   qt/res/icons/bluerectangle.png \
+  qt/res/icons/ravencointext.svg \
   qt/res/icons/raven.ico \
   qt/res/icons/raven_testnet.ico \
   qt/res/icons/raven.png \

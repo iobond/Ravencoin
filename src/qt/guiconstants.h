@@ -34,6 +34,16 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define COLOR_TX_STATUS_DANGER QColor(200, 100, 100)
 /* Transaction list -- TX status decoration - default color */
 #define COLOR_BLACK QColor(0, 0, 0)
+/* Ravencoin dark orange */
+#define COLOR_DARK_ORANGE QColor(240, 83, 57)
+/* Ravencoin light orange */
+#define COLOR_LIGHT_ORANGE QColor(247, 148, 51)
+/* Ravencoin dark blue */
+#define COLOR_DARK_BLUE QColor(46, 62, 128)
+/* Ravencoin light blue */
+#define COLOR_LIGHT_BLUE QColor(81, 107, 194)
+/* Ravencoin asset text */
+#define COLOR_ASSET_TEXT QColor(255, 255, 255)
 
 /* Tooltips longer than this (in characters) are converted into rich text,
    so that they can be word-wrapped.

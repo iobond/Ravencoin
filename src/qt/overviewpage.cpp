@@ -147,17 +147,41 @@ public:
         /** Get basic padding and half height */
         QRect mainRect = option.rect;
         int xspace = nIconSize + 32;
-        int ypad = 6;
-        int halfheight = (mainRect.height() - 2*ypad)/2;
+        int ypad = 2;
+
+        // Create the gradient rect to draw the gradient over
+        QRect gradientRect = mainRect;
+        gradientRect.setTop(gradientRect.top() + 2);
+        gradientRect.setBottom(gradientRect.bottom() - 2);
+
+        int halfheight = (gradientRect.height() - 2*ypad)/2;
 
         /** Create the three main rectangles  (Icon, Name, Amount) */
-        QRect assetAdministratorRect(QPoint(20, mainRect.top() + halfheight/2 - ypad/2), QSize(nIconSize, nIconSize));
-        QRect assetNameRect(mainRect.left() + xspace - extraNameSpacing, mainRect.top()+ypad+(halfheight/2), mainRect.width() - xspace, halfheight);
-        QRect amountRect(mainRect.left() + xspace, mainRect.top()+ypad+(halfheight/2), mainRect.width() - xspace - 16, halfheight);
+        QRect assetAdministratorRect(QPoint(20, gradientRect.top() + halfheight/2 - 3*ypad), QSize(nIconSize, nIconSize));
+        QRect assetNameRect(gradientRect.left() + xspace - extraNameSpacing, gradientRect.top()+ypad+(halfheight/2), gradientRect.width() - xspace, halfheight + ypad);
+        QRect amountRect(gradientRect.left() + xspace, gradientRect.top()+ypad+(halfheight/2), gradientRect.width() - xspace - 16, halfheight);
 
-        /** Paint the background */
-        QPixmap background = qvariant_cast<QPixmap>(index.data(AssetTableModel::BackgroundRole));
-        painter->drawPixmap(mainRect, background);
+        // Create the gradient for the asset items
+        QLinearGradient gradient(mainRect.topLeft(), mainRect.bottomRight());
+
+        // Select the color of the gradient
+        if (index.data(AssetTableModel::AdministratorRole).toBool()) {
+            gradient.setColorAt(0, COLOR_DARK_ORANGE);
+            gradient.setColorAt(1, COLOR_LIGHT_ORANGE);
+        } else {
+            gradient.setColorAt(0, COLOR_LIGHT_BLUE);
+            gradient.setColorAt(1, COLOR_DARK_BLUE);
+        }
+
+
+
+        // Using 4 are the radius because the pixels are solid
+        QPainterPath path;
+        path.addRoundedRect(gradientRect, 4, 4);
+
+        // Paint the gradient
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->fillPath(path, gradient);
 
         /** Draw asset administrator icon */
         if (nIconSize)
@@ -165,14 +189,14 @@ public:
 
         /** Create the font that is used for painting the asset name */
         QFont nameFont;
-        nameFont.setFamily("SFProText"); // TODO use a different font, not a mac font
+        nameFont.setFamily("Arial");
         nameFont.setPixelSize(18);
         nameFont.setWeight(400);
         nameFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.4);
 
         /** Create the font that is used for painting the asset amount */
         QFont amountFont;
-        amountFont.setFamily("SFProText"); // TODO use a different font, not a mac font
+        amountFont.setFamily("Arial");
         amountFont.setPixelSize(14);
         amountFont.setWeight(600);
         amountFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.3);
@@ -183,13 +207,13 @@ public:
 
         /** Paint the asset name */
         QRect boundingRect;
-        QPen penAssetName(QColor("#ffffff"), 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+        QPen penAssetName(COLOR_ASSET_TEXT, 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
         painter->setPen(penAssetName);
         painter->setFont(nameFont);
         painter->drawText(assetNameRect, Qt::AlignLeft|Qt::AlignVCenter, name, &boundingRect);
 
         /** Paint the amount */
-        QPen penAmount(QColor("#ffffff"), 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+        QPen penAmount(COLOR_ASSET_TEXT, 10, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
         painter->setPen(penAmount);
         painter->setFont(amountFont);
         painter->setOpacity(0.65);

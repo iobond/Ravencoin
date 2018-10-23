@@ -40,6 +40,10 @@
 
 #include <iostream>
 
+#include <QToolButton>
+#include <QPushButton>
+#include <QPainter>
+#include <QWidgetAction>
 #include <QAction>
 #include <QApplication>
 #include <QDateTime>
@@ -286,6 +290,12 @@ RavenGUI::~RavenGUI()
 
 void RavenGUI::createActions()
 {
+    QFont font = QFont();
+    font.setPixelSize(25);
+    font.setWeight(400);
+    font.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.8);
+    font.setFamily("Arial");
+
     QActionGroup *tabGroup = new QActionGroup(this);
 
     overviewAction = new QAction(platformStyle->SingleColorIcon(":/icons/overview"), tr("&Overview"), this);
@@ -293,6 +303,7 @@ void RavenGUI::createActions()
     overviewAction->setToolTip(overviewAction->statusTip());
     overviewAction->setCheckable(true);
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
+    overviewAction->setFont(font);
     tabGroup->addAction(overviewAction);
 
     sendCoinsAction = new QAction(platformStyle->SingleColorIcon(":/icons/send"), tr("&Send"), this);
@@ -300,6 +311,7 @@ void RavenGUI::createActions()
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
     sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
+    sendCoinsAction->setFont(font);
     tabGroup->addAction(sendCoinsAction);
 
     sendCoinsMenuAction = new QAction(platformStyle->TextColorIcon(":/icons/send"), sendCoinsAction->text(), this);
@@ -311,6 +323,7 @@ void RavenGUI::createActions()
     receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
     receiveCoinsAction->setCheckable(true);
     receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
+    receiveCoinsAction->setFont(font);
     tabGroup->addAction(receiveCoinsAction);
 
     receiveCoinsMenuAction = new QAction(platformStyle->TextColorIcon(":/icons/receiving_addresses"), receiveCoinsAction->text(), this);
@@ -322,6 +335,7 @@ void RavenGUI::createActions()
     historyAction->setToolTip(historyAction->statusTip());
     historyAction->setCheckable(true);
     historyAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_4));
+    historyAction->setFont(font);
     tabGroup->addAction(historyAction);
 
     /** RVN START */
@@ -330,6 +344,7 @@ void RavenGUI::createActions()
     assetAction->setToolTip(assetAction->statusTip());
     assetAction->setCheckable(true);
     assetAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
+    assetAction->setFont(font);
     tabGroup->addAction(assetAction);
     /** RVN END */
 
@@ -476,7 +491,22 @@ void RavenGUI::createToolBars()
 {
     if(walletFrame)
     {
-        QToolBar *toolbar = addToolBar(tr("Tabs toolbar"));
+        /** RVN START */
+        // Create the orange background and the vertical tool bar
+        QWidget* imageWidget = new QWidget();
+
+        QString widgetStyleSheet = "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 1 %2);";
+
+        imageWidget->setStyleSheet(widgetStyleSheet.arg(COLOR_LIGHT_BLUE.name(), COLOR_DARK_BLUE.name()));
+
+        QLabel* label = new QLabel();
+        label->setPixmap(QPixmap::fromImage(QImage(":/icons/ravencointext")));
+        label->setContentsMargins(0,0,0,50);
+        label->setStyleSheet("background-color: transparent;");
+        /** RVN END */
+
+        QToolBar *toolbar = new QToolBar();
+        toolbar->setMinimumWidth(label->width());
         toolbar->setContextMenuPolicy(Qt::PreventContextMenu);
         toolbar->setMovable(false);
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
@@ -484,11 +514,41 @@ void RavenGUI::createToolBars()
         toolbar->addAction(sendCoinsAction);
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
+        toolbar->addAction(assetAction);
 
         /** RVN START */
-        toolbar->addAction(assetAction);
-        /** RVN END */
+        QString tbStyleSheet = "QToolBar { background-color : transparent; border-color: transparent; }  "
+                             "QToolButton {background-color: transparent; border-color: transparent; width: 249px; color: white} "
+                             "QToolButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 %1, stop: 1 %2); border: none;}";
+
+        toolbar->setStyleSheet(tbStyleSheet.arg(COLOR_DARK_ORANGE.name(), COLOR_LIGHT_ORANGE.name()));
+
+        toolbar->setOrientation(Qt::Vertical);
+        toolbar->setIconSize(QSize(40, 40));
+
+        QLayout* lay = toolbar->layout();
+        for(int i = 0; i < lay->count(); ++i)
+            lay->itemAt(i)->setAlignment(Qt::AlignLeft);
+
+
         overviewAction->setChecked(true);
+
+        QVBoxLayout* ravenLabelLayout = new QVBoxLayout(imageWidget);
+        ravenLabelLayout->addWidget(label);
+        ravenLabelLayout->addWidget(toolbar);
+        ravenLabelLayout->setDirection(QBoxLayout::TopToBottom);
+        ravenLabelLayout->addStretch(1);
+
+        QVBoxLayout* layout = new QVBoxLayout();
+        layout->addWidget(imageWidget);
+        layout->addWidget(walletFrame);
+        layout->setSpacing(0);
+        layout->setContentsMargins(QMargins());
+        layout->setDirection(QBoxLayout::LeftToRight);
+        QWidget* containerWidget = new QWidget();
+        containerWidget->setLayout(layout);
+        setCentralWidget(containerWidget);
+        /** RVN END */
     }
 }
 
