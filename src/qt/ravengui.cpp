@@ -40,6 +40,10 @@
 
 #include <iostream>
 
+#include <QDebug>
+#include <QtNetwork/QNetworkAccessManager>
+#include <QtNetwork/QNetworkReply>
+#include <QGraphicsDropShadowEffect>
 #include <QToolButton>
 #include <QPushButton>
 #include <QPainter>
@@ -123,6 +127,12 @@ RavenGUI::RavenGUI(const PlatformStyle *_platformStyle, const NetworkStyle *netw
     openAction(0),
     showHelpMessageAction(0),
     assetAction(0),
+    headerWidget(0),
+    labelCurrentMarket(0),
+    labelCurrentPrice(0),
+    pricingTimer(0),
+    networkManager(0),
+    request(0),
     trayIcon(0),
     trayIconMenu(0),
     notificator(0),
@@ -181,6 +191,11 @@ RavenGUI::RavenGUI(const PlatformStyle *_platformStyle, const NetworkStyle *netw
          */
         setCentralWidget(rpcConsole);
     }
+
+    labelCurrentMarket = new QLabel();
+    labelCurrentPrice = new QLabel();
+    headerWidget = new QWidget();
+    pricingTimer = new QTimer();
 
     // Accept D&D of URIs
     setAcceptDrops(true);
@@ -457,7 +472,6 @@ void RavenGUI::createMenuBar()
     if(walletFrame)
     {
         file->addAction(openAction);
-        file->addAction(backupWalletAction);
         file->addAction(signMessageAction);
         file->addAction(verifyMessageAction);
         file->addSeparator();
@@ -467,10 +481,11 @@ void RavenGUI::createMenuBar()
     }
     file->addAction(quitAction);
 
-    QMenu *settings = appMenuBar->addMenu(tr("&Settings"));
+    QMenu *settings = appMenuBar->addMenu(tr("&Wallet"));
     if(walletFrame)
     {
         settings->addAction(encryptWalletAction);
+        settings->addAction(backupWalletAction);
         settings->addAction(changePassphraseAction);
         settings->addSeparator();
     }
@@ -493,11 +508,11 @@ void RavenGUI::createToolBars()
     {
         /** RVN START */
         // Create the orange background and the vertical tool bar
-        QWidget* imageWidget = new QWidget();
+        QWidget* toolbarWidget = new QWidget();
 
         QString widgetStyleSheet = "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 1 %2);";
 
-        imageWidget->setStyleSheet(widgetStyleSheet.arg(COLOR_LIGHT_BLUE.name(), COLOR_DARK_BLUE.name()));
+        toolbarWidget->setStyleSheet(widgetStyleSheet.arg(COLOR_LIGHT_BLUE.name(), COLOR_DARK_BLUE.name()));
 
         QLabel* label = new QLabel();
         label->setPixmap(QPixmap::fromImage(QImage(":/icons/ravencointext")));
@@ -533,21 +548,136 @@ void RavenGUI::createToolBars()
 
         overviewAction->setChecked(true);
 
-        QVBoxLayout* ravenLabelLayout = new QVBoxLayout(imageWidget);
+        QVBoxLayout* ravenLabelLayout = new QVBoxLayout(toolbarWidget);
         ravenLabelLayout->addWidget(label);
         ravenLabelLayout->addWidget(toolbar);
         ravenLabelLayout->setDirection(QBoxLayout::TopToBottom);
         ravenLabelLayout->addStretch(1);
 
+        /** Create the shadow effects on the top header */
+        QGraphicsDropShadowEffect *topHeaderShadow = new QGraphicsDropShadowEffect;
+        topHeaderShadow->setBlurRadius(8.0);
+        topHeaderShadow->setColor(QColor(0, 0, 0, 46));
+        topHeaderShadow->setOffset(4.0);
+
+        QWidget* mainWalletWidget = new QWidget();
+        mainWalletWidget->setStyleSheet("background-color: #fbfbfe");
+
+        /** Create the shadow effects for the main wallet frame. Make it so it puts a shawdow on the tool bar */
+        QGraphicsDropShadowEffect *walletFrameShadow = new QGraphicsDropShadowEffect;
+        walletFrameShadow->setBlurRadius(8.0);
+        walletFrameShadow->setColor(QColor(0, 0, 0, 46));
+        walletFrameShadow->setXOffset(-9.0);
+        walletFrameShadow->setYOffset(0);
+        mainWalletWidget->setGraphicsEffect(walletFrameShadow);
+
+        // Set the headers widget options
+        headerWidget->setContentsMargins(0,0,0,50);
+        headerWidget->setStyleSheet("background-color: white;");
+        headerWidget->setGraphicsEffect(topHeaderShadow);
+        headerWidget->setFixedHeight(75);
+
+        QFont currentMarketFont;
+        currentMarketFont.setFamily("Arial");
+        currentMarketFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.6);
+        currentMarketFont.setPixelSize(18);
+
+        // Set the pricing information
+        QHBoxLayout* priceLayout = new QHBoxLayout(headerWidget);
+        priceLayout->setContentsMargins(QMargins());
+        priceLayout->setDirection(QBoxLayout::LeftToRight);
+        priceLayout->setAlignment(Qt::AlignVCenter);
+        labelCurrentMarket->setContentsMargins(50,0,0,0);
+        labelCurrentMarket->setFixedHeight(75);
+        labelCurrentMarket->setAlignment(Qt::AlignVCenter);
+        labelCurrentMarket->setStyleSheet(COLOR_LABEL_STRING);
+        labelCurrentMarket->setFont(currentMarketFont);
+        labelCurrentMarket->setText(tr("Market Price"));
+
+        labelCurrentPrice->setContentsMargins(25,0,0,0);
+        labelCurrentPrice->setFixedHeight(75);
+        labelCurrentPrice->setAlignment(Qt::AlignVCenter);
+        labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+        labelCurrentPrice->setFont(currentMarketFont);
+
+        QLabel* labelBtcRvn = new QLabel();
+        labelBtcRvn->setText("BTC / RVN");
+        labelBtcRvn->setContentsMargins(15,0,0,0);
+        labelBtcRvn->setFixedHeight(75);
+        labelBtcRvn->setAlignment(Qt::AlignVCenter);
+        labelBtcRvn->setStyleSheet(COLOR_LABEL_STRING);
+        labelBtcRvn->setFont(currentMarketFont);
+
+        priceLayout->setGeometry(headerWidget->rect());
+        priceLayout->addWidget(labelCurrentMarket, 0, Qt::AlignVCenter | Qt::AlignLeft);
+        priceLayout->addWidget(labelCurrentPrice, 0,  Qt::AlignVCenter | Qt::AlignLeft);
+        priceLayout->addWidget(labelBtcRvn, 0 , Qt::AlignVCenter | Qt::AlignLeft);
+        priceLayout->addStretch();
+
+        // Create the layout for widget to the right of the tool bar
+        QVBoxLayout* mainFrameLayout = new QVBoxLayout(mainWalletWidget);
+        mainFrameLayout->addWidget(headerWidget);
+        mainFrameLayout->addWidget(walletFrame);
+        mainFrameLayout->setDirection(QBoxLayout::TopToBottom);
+        mainFrameLayout->setContentsMargins(QMargins());
+
         QVBoxLayout* layout = new QVBoxLayout();
-        layout->addWidget(imageWidget);
-        layout->addWidget(walletFrame);
+        layout->addWidget(toolbarWidget);
+        layout->addWidget(mainWalletWidget);
         layout->setSpacing(0);
         layout->setContentsMargins(QMargins());
         layout->setDirection(QBoxLayout::LeftToRight);
         QWidget* containerWidget = new QWidget();
         containerWidget->setLayout(layout);
         setCentralWidget(containerWidget);
+
+        // Network request code for the header widget
+        networkManager = new QNetworkAccessManager();
+        request = new QNetworkRequest();
+        QObject::connect(networkManager, &QNetworkAccessManager::finished,
+                         this, [=](QNetworkReply *reply) {
+                    if (reply->error()) {
+                        labelCurrentPrice->setText("");
+                        qDebug() << reply->errorString();
+                        return;
+                    }
+
+                    QString answer = reply->readAll();
+
+                    QRegExp rx("\\d*.\\d\\d\\d\\d\\d\\d\\d\\d");
+                    rx.indexIn(answer);
+
+                    QStringList list = rx.capturedTexts();
+
+                    bool ok;
+                    if (!list.isEmpty()) {
+                        qDebug() << list.first();
+                        double next = list.first().toDouble(&ok);
+                        if (!ok) {
+                            labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+                            labelCurrentPrice->setText("");
+                        } else {
+                            double current = labelCurrentPrice->text().toDouble(&ok);
+                            if (!ok) {
+                                current = 0.00000000;
+                            } else {
+                                if (next < current)
+                                    labelCurrentPrice->setStyleSheet("color: red");
+                                else if (next > current)
+                                    labelCurrentPrice->setStyleSheet("color: green");
+                                else
+                                    labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+                            }
+                            labelCurrentPrice->setText(QString("%1").arg(QString().setNum(next, 'f', 8)));
+                            labelCurrentPrice->setToolTip(tr("Brought to you by binance.com"));
+                        }
+                    }
+                }
+        );
+
+        connect(pricingTimer, SIGNAL(timeout()), this, SLOT(getPriceInfo()));
+        pricingTimer->start(10000);
+        getPriceInfo();
         /** RVN END */
     }
 }
@@ -1391,4 +1521,10 @@ void UnitDisplayStatusBarControl::onMenuSelection(QAction* action)
     {
         optionsModel->setDisplayUnit(action->data());
     }
+}
+
+void RavenGUI::getPriceInfo()
+{
+    request->setUrl(QUrl("https://api.binance.com/api/v1/ticker/price?symbol=RVNBTC"));
+    networkManager->get(*request);
 }

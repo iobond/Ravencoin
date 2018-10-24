@@ -37,6 +37,8 @@ class QWidgetAction;
 class QAction;
 class QProgressBar;
 class QProgressDialog;
+class QNetworkAccessManager;
+class QNetworkRequest;
 QT_END_NAMESPACE
 
 /**
@@ -116,6 +118,12 @@ private:
 
     /** RVN START */
     QAction *assetAction;
+    QWidget *headerWidget;
+    QLabel *labelCurrentMarket;
+    QLabel *labelCurrentPrice;
+    QTimer *pricingTimer;
+    QNetworkAccessManager* networkManager;
+    QNetworkRequest* request;
     /** RVN END */
 
     QSystemTrayIcon *trayIcon;
@@ -175,6 +183,8 @@ public Q_SLOTS:
        @param[in] ret       pointer to a bool that will be modified to whether Ok was clicked (modal only)
     */
     void message(const QString &title, const QString &message, unsigned int style, bool *ret = nullptr);
+
+    void getPriceInfo();
 
 #ifdef ENABLE_WALLET
     /** Set the encryption status as shown in the UI.

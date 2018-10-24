@@ -44,7 +44,8 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define COLOR_LIGHT_BLUE QColor(81, 107, 194)
 /* Ravencoin asset text */
 #define COLOR_ASSET_TEXT QColor(255, 255, 255)
-
+/* Ravencoin label color */
+#define COLOR_LABEL_STRING "color: #4960ad"
 /* Tooltips longer than this (in characters) are converted into rich text,
    so that they can be word-wrapped.
  */

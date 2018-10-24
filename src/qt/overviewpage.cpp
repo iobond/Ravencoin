@@ -311,17 +311,17 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     /** Create the shadow effects on the frames */
     QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
     bodyShadow->setBlurRadius(9.0);
-    bodyShadow->setColor(QColor(0, 0, 0, 160));
+    bodyShadow->setColor(QColor(0, 0, 0, 46));
     bodyShadow->setOffset(4.0);
 
     QGraphicsDropShadowEffect *bodyShadow2 = new QGraphicsDropShadowEffect;
     bodyShadow2->setBlurRadius(9.0);
-    bodyShadow2->setColor(QColor(0, 0, 0, 160));
+    bodyShadow2->setColor(QColor(0, 0, 0, 46));
     bodyShadow2->setOffset(4.0);
 
     QGraphicsDropShadowEffect *bodyShadow3 = new QGraphicsDropShadowEffect;
     bodyShadow3->setBlurRadius(9.0);
-    bodyShadow3->setColor(QColor(0, 0, 0, 160));
+    bodyShadow3->setColor(QColor(0, 0, 0, 46));
     bodyShadow3->setOffset(4.0);
 
     ui->assetFrame->setGraphicsEffect(bodyShadow);
@@ -329,15 +329,15 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->frame_2->setGraphicsEffect(bodyShadow3);
 
     /** Update the labels colors */
-    ui->assetBalanceLabel->setStyleSheet("color: #4960ad");
-    ui->rvnBalancesLabel->setStyleSheet("color: #4960ad");
-    ui->labelBalanceText->setStyleSheet("color: #4960ad");
-    ui->labelPendingText->setStyleSheet("color: #4960ad");
-    ui->labelImmatureText->setStyleSheet("color: #4960ad");
-    ui->labelTotalText->setStyleSheet("color: #4960ad");
-    ui->labelSpendable->setStyleSheet("color: #4960ad");
-    ui->labelWatchonly->setStyleSheet("color: #4960ad");
-    ui->recentTransactionsLabel->setStyleSheet("color: #4960ad");
+    ui->assetBalanceLabel->setStyleSheet(COLOR_LABEL_STRING);
+    ui->rvnBalancesLabel->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelBalanceText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelPendingText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelImmatureText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelTotalText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelSpendable->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelWatchonly->setStyleSheet(COLOR_LABEL_STRING);
+    ui->recentTransactionsLabel->setStyleSheet(COLOR_LABEL_STRING);
 
     /** Create the search bar for assets */
     ui->assetSearch->setAttribute(Qt::WA_MacShowFocusRect, 0);
