@@ -118,6 +118,8 @@ private:
 
     /** RVN START */
     QAction *assetAction;
+    QAction *messagingAction;
+    QAction *votingAction;
     QWidget *headerWidget;
     QLabel *labelCurrentMarket;
     QLabel *labelCurrentPrice;

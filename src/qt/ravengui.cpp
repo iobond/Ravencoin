@@ -127,6 +127,8 @@ RavenGUI::RavenGUI(const PlatformStyle *_platformStyle, const NetworkStyle *netw
     openAction(0),
     showHelpMessageAction(0),
     assetAction(0),
+    messagingAction(0),
+    votingAction(0),
     headerWidget(0),
     labelCurrentMarket(0),
     labelCurrentPrice(0),
@@ -192,10 +194,14 @@ RavenGUI::RavenGUI(const PlatformStyle *_platformStyle, const NetworkStyle *netw
         setCentralWidget(rpcConsole);
     }
 
+    /** RVN START */
     labelCurrentMarket = new QLabel();
     labelCurrentPrice = new QLabel();
     headerWidget = new QWidget();
     pricingTimer = new QTimer();
+    networkManager = new QNetworkAccessManager();
+    request = new QNetworkRequest();
+    /** RVN END */
 
     // Accept D&D of URIs
     setAcceptDrops(true);
@@ -361,6 +367,23 @@ void RavenGUI::createActions()
     assetAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
     assetAction->setFont(font);
     tabGroup->addAction(assetAction);
+
+    messagingAction = new QAction(platformStyle->SingleColorIcon(":/icons/editcopy"), tr("&Messaging"), this);
+    messagingAction->setStatusTip(tr("Coming Soon"));
+    messagingAction->setToolTip(messagingAction->statusTip());
+    messagingAction->setCheckable(true);
+    messagingAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
+    messagingAction->setFont(font);
+    tabGroup->addAction(messagingAction);
+
+    votingAction = new QAction(platformStyle->SingleColorIcon(":/icons/edit"), tr("&Voting"), this);
+    votingAction->setStatusTip(tr("Coming Soon"));
+    votingAction->setToolTip(votingAction->statusTip());
+    votingAction->setCheckable(true);
+    votingAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
+    votingAction->setFont(font);
+    tabGroup->addAction(votingAction);
+
     /** RVN END */
 
 #ifdef ENABLE_WALLET
@@ -380,6 +403,8 @@ void RavenGUI::createActions()
     connect(historyAction, SIGNAL(triggered()), this, SLOT(gotoHistoryPage()));
     connect(assetAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(assetAction, SIGNAL(triggered()), this, SLOT(gotoAssetsPage()));
+    // TODO add messaging actions to go to messaging page when clicked
+    // TODO add voting actions to go to voting page when clicked
 #endif // ENABLE_WALLET
 
     quitAction = new QAction(platformStyle->TextColorIcon(":/icons/quit"), tr("E&xit"), this);
@@ -530,10 +555,13 @@ void RavenGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
         toolbar->addAction(assetAction);
+        toolbar->addAction(messagingAction);
+        toolbar->addAction(votingAction);
 
         /** RVN START */
-        QString tbStyleSheet = "QToolBar { background-color : transparent; border-color: transparent; }  "
+        QString tbStyleSheet = "QToolBar {background-color : transparent; border-color: transparent; }  "
                              "QToolButton {background-color: transparent; border-color: transparent; width: 249px; color: white} "
+                             "QToolTip {background-color: white; border: none; }"
                              "QToolButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 %1, stop: 1 %2); border: none;}";
 
         toolbar->setStyleSheet(tbStyleSheet.arg(COLOR_DARK_ORANGE.name(), COLOR_LIGHT_ORANGE.name()));
@@ -544,7 +572,6 @@ void RavenGUI::createToolBars()
         QLayout* lay = toolbar->layout();
         for(int i = 0; i < lay->count(); ++i)
             lay->itemAt(i)->setAlignment(Qt::AlignLeft);
-
 
         overviewAction->setChecked(true);
 
@@ -594,10 +621,11 @@ void RavenGUI::createToolBars()
         labelCurrentMarket->setFont(currentMarketFont);
         labelCurrentMarket->setText(tr("Market Price"));
 
+        QString currentPriceStyleSheet = "QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
         labelCurrentPrice->setContentsMargins(25,0,0,0);
         labelCurrentPrice->setFixedHeight(75);
         labelCurrentPrice->setAlignment(Qt::AlignVCenter);
-        labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+        labelCurrentPrice->setStyleSheet(currentPriceStyleSheet.arg("#4960ad"));
         labelCurrentPrice->setFont(currentMarketFont);
 
         QLabel* labelBtcRvn = new QLabel();
@@ -632,8 +660,6 @@ void RavenGUI::createToolBars()
         setCentralWidget(containerWidget);
 
         // Network request code for the header widget
-        networkManager = new QNetworkAccessManager();
-        request = new QNetworkRequest();
         QObject::connect(networkManager, &QNetworkAccessManager::finished,
                          this, [=](QNetworkReply *reply) {
                     if (reply->error()) {
@@ -641,20 +667,23 @@ void RavenGUI::createToolBars()
                         qDebug() << reply->errorString();
                         return;
                     }
-
+                    // Get the data from the network request
                     QString answer = reply->readAll();
 
+                    // Create regex expression to find the value with 8 decimals
                     QRegExp rx("\\d*.\\d\\d\\d\\d\\d\\d\\d\\d");
                     rx.indexIn(answer);
 
+                    // List the found values
                     QStringList list = rx.capturedTexts();
 
+                    QString currentPriceStyleSheet = "QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
+                    // Evaluate the current and next numbers and assign a color (green for positive, red for negative)
                     bool ok;
                     if (!list.isEmpty()) {
-                        qDebug() << list.first();
                         double next = list.first().toDouble(&ok);
                         if (!ok) {
-                            labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+                            labelCurrentPrice->setStyleSheet(currentPriceStyleSheet.arg("#4960ad"));
                             labelCurrentPrice->setText("");
                         } else {
                             double current = labelCurrentPrice->text().toDouble(&ok);
@@ -662,11 +691,11 @@ void RavenGUI::createToolBars()
                                 current = 0.00000000;
                             } else {
                                 if (next < current)
-                                    labelCurrentPrice->setStyleSheet("color: red");
+                                    labelCurrentPrice->setStyleSheet(currentPriceStyleSheet.arg("red"));
                                 else if (next > current)
-                                    labelCurrentPrice->setStyleSheet("color: green");
+                                    labelCurrentPrice->setStyleSheet(currentPriceStyleSheet.arg("green"));
                                 else
-                                    labelCurrentPrice->setStyleSheet(COLOR_LABEL_STRING);
+                                    labelCurrentPrice->setStyleSheet(currentPriceStyleSheet.arg("#4960ad"));
                             }
                             labelCurrentPrice->setText(QString("%1").arg(QString().setNum(next, 'f', 8)));
                             labelCurrentPrice->setToolTip(tr("Brought to you by binance.com"));
@@ -675,6 +704,7 @@ void RavenGUI::createToolBars()
                 }
         );
 
+        // Create the timer
         connect(pricingTimer, SIGNAL(timeout()), this, SLOT(getPriceInfo()));
         pricingTimer->start(10000);
         getPriceInfo();
@@ -788,6 +818,8 @@ void RavenGUI::setWalletActionsEnabled(bool enabled)
 
     /** RVN START */
     assetAction->setEnabled(false);
+    messagingAction->setEnabled(false);
+    votingAction->setEnabled(false);
     /** RVN END */
 }
 
