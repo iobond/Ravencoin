@@ -535,14 +535,14 @@ void RavenGUI::createToolBars()
         // Create the orange background and the vertical tool bar
         QWidget* toolbarWidget = new QWidget();
 
-        QString widgetStyleSheet = "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 1 %2);";
+        QString widgetStyleSheet = "QWidget {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 1 %2);}";
 
         toolbarWidget->setStyleSheet(widgetStyleSheet.arg(COLOR_LIGHT_BLUE.name(), COLOR_DARK_BLUE.name()));
 
         QLabel* label = new QLabel();
         label->setPixmap(QPixmap::fromImage(QImage(":/icons/ravencointext")));
         label->setContentsMargins(0,0,0,50);
-        label->setStyleSheet("background-color: transparent;");
+        label->setStyleSheet("QLabel{background-color: transparent;}");
         /** RVN END */
 
         QToolBar *toolbar = new QToolBar();
@@ -559,10 +559,10 @@ void RavenGUI::createToolBars()
         toolbar->addAction(votingAction);
 
         /** RVN START */
-        QString tbStyleSheet = "QToolBar {background-color : transparent; border-color: transparent; }  "
-                             "QToolButton {background-color: transparent; border-color: transparent; width: 249px; color: white} "
-                             "QToolTip {background-color: white; border: none; }"
-                             "QToolButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 %1, stop: 1 %2); border: none;}";
+        QString tbStyleSheet = ".QToolBar {background-color : transparent; border-color: transparent; }  "
+                             ".QToolButton {background-color: transparent; border-color: transparent; width: 249px; color: white} "
+                             ".QToolTip {background-color: white; border: none; }"
+                             ".QToolButton:checked {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 %1, stop: 1 %2); border: none;}";
 
         toolbar->setStyleSheet(tbStyleSheet.arg(COLOR_DARK_ORANGE.name(), COLOR_LIGHT_ORANGE.name()));
 
@@ -588,7 +588,7 @@ void RavenGUI::createToolBars()
         topHeaderShadow->setOffset(4.0);
 
         QWidget* mainWalletWidget = new QWidget();
-        mainWalletWidget->setStyleSheet("background-color: #fbfbfe");
+        mainWalletWidget->setStyleSheet(".QWidget{background-color: #fbfbfe}");
 
         /** Create the shadow effects for the main wallet frame. Make it so it puts a shawdow on the tool bar */
         QGraphicsDropShadowEffect *walletFrameShadow = new QGraphicsDropShadowEffect;
@@ -600,7 +600,7 @@ void RavenGUI::createToolBars()
 
         // Set the headers widget options
         headerWidget->setContentsMargins(0,0,0,50);
-        headerWidget->setStyleSheet("background-color: white;");
+        headerWidget->setStyleSheet(".QWidget{background-color: white;}");
         headerWidget->setGraphicsEffect(topHeaderShadow);
         headerWidget->setFixedHeight(75);
 
@@ -621,7 +621,7 @@ void RavenGUI::createToolBars()
         labelCurrentMarket->setFont(currentMarketFont);
         labelCurrentMarket->setText(tr("Market Price"));
 
-        QString currentPriceStyleSheet = "QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
+        QString currentPriceStyleSheet = ".QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
         labelCurrentPrice->setContentsMargins(25,0,0,0);
         labelCurrentPrice->setFixedHeight(75);
         labelCurrentPrice->setAlignment(Qt::AlignVCenter);
@@ -677,7 +677,7 @@ void RavenGUI::createToolBars()
                     // List the found values
                     QStringList list = rx.capturedTexts();
 
-                    QString currentPriceStyleSheet = "QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
+                    QString currentPriceStyleSheet = ".QLabel{color: %1;} QToolTip {color: black; background-color: white; border: none; }";
                     // Evaluate the current and next numbers and assign a color (green for positive, red for negative)
                     bool ok;
                     if (!list.isEmpty()) {

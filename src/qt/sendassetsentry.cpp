@@ -70,7 +70,7 @@ SendAssetsEntry::SendAssetsEntry(const PlatformStyle *_platformStyle, const QStr
 
     fShowAdministratorList = false;
 
-    this->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px; border: none;");
+    this->setStyleSheet(".SendAssetsEntry {background-color: #faf9f6; padding-top: 10px; padding-right: 30px; border: none;}");
 
     QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
     bodyShadow->setBlurRadius(9.0);

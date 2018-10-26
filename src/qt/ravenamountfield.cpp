@@ -204,9 +204,6 @@ RavenAmountField::RavenAmountField(QWidget *parent) :
     layout->addWidget(amount);
     unit = new QValueComboBox();
     unit->setModel(new RavenUnits(this));
-    unit->setFixedWidth(100);
-    unit->setStyleSheet("QComboBox {border: 1px solid lightgray; padding-left: 10px; color: black; background-color: transparent; border-radius: 4px; selection-background-color: rgb(0, 85, 255);} QComboBox::item:selected {"
-                        "background-color: rgb(0, 85, 255); color: white;}");
     layout->addWidget(unit);
     layout->addStretch(1);
     layout->setContentsMargins(0,0,0,0);

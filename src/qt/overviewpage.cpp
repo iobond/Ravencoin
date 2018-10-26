@@ -268,28 +268,6 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->listAssets->setIconSize(QSize(42, 42));
     ui->listAssets->setMinimumHeight(5 * (42 + 2));
     ui->listAssets->viewport()->setAutoFillBackground(false);
-    ui->listAssets->verticalScrollBar()->setStyleSheet(QString::fromUtf8("QScrollBar:vertical {"
-                                                                         "        width: 10px;"
-                                                                         "        margin: 0 0 0 0;"
-                                                                         "}"
-                                                                         "QScrollBar::handle:vertical {"
-                                                                         "            height: 5px;"
-                                                                         "            background: #999999;"
-                                                                         "}"
-                                                                         "QScrollBar::add-line:vertical {"
-                                                                         "                        background: none;"
-                                                                         "                        height: 20px;"
-                                                                         "                        subcontrol-position: bottom;"
-                                                                         "                        subcontrol-origin: margin;"
-                                                                         "}"
-                                                                         "QScrollBar::sub-line:vertical {"
-                                                                         "                        background: none;"
-                                                                         "                        height: 20px;"
-                                                                         "                        subcontrol-position: top;"
-                                                                         "                        subcontrol-origin: margin;"
-                                                                         "}"
-
-    ));
 
     connect(ui->listTransactions, SIGNAL(clicked(QModelIndex)), this, SLOT(handleTransactionClicked(QModelIndex)));
     connect(ui->listAssets, SIGNAL(clicked(QModelIndex)), this, SLOT(handleAssetClicked(QModelIndex)));
@@ -301,9 +279,9 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
 
     /** Set the overview page background colors, and the frames colors and padding */
-    ui->assetFrame->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px;");
-    ui->frame->setStyleSheet("background-color: white; padding-bottom: 10px; padding-right: 5px;");
-    ui->frame_2->setStyleSheet("background-color: white; padding-left: 5px;");
+    ui->assetFrame->setStyleSheet(".QFrame {background-color: white; padding-top: 10px; padding-right: 5px;}");
+    ui->frame->setStyleSheet(".QFrame {background-color: white; padding-bottom: 10px; padding-right: 5px;}");
+    ui->frame_2->setStyleSheet(".QFrame {background-color: white; padding-left: 5px;}");
 
     ui->verticalLayout_2->setSpacing(10);
     ui->verticalLayout_3->setSpacing(10);
@@ -324,6 +302,11 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     bodyShadow3->setColor(QColor(0, 0, 0, 46));
     bodyShadow3->setOffset(4.0);
 
+    QFont mainLabelFont;
+    mainLabelFont.setFamily("Arial");
+    mainLabelFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.6);
+    mainLabelFont.setPixelSize(18);
+
     ui->assetFrame->setGraphicsEffect(bodyShadow);
     ui->frame->setGraphicsEffect(bodyShadow2);
     ui->frame_2->setGraphicsEffect(bodyShadow3);
@@ -339,9 +322,14 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->labelWatchonly->setStyleSheet(COLOR_LABEL_STRING);
     ui->recentTransactionsLabel->setStyleSheet(COLOR_LABEL_STRING);
 
+    /** Update the labels font */
+    ui->rvnBalancesLabel->setFont(mainLabelFont);
+    ui->assetBalanceLabel->setFont(mainLabelFont);
+    ui->recentTransactionsLabel->setFont(mainLabelFont);
+
     /** Create the search bar for assets */
     ui->assetSearch->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->assetSearch->setStyleSheet("border: 1px solid #4960ad; border-radius: 5px;");
+    ui->assetSearch->setStyleSheet(".QLineEdit {border: 1px solid #4960ad; border-radius: 5px;}");
     ui->assetSearch->setAlignment(Qt::AlignVCenter);
     QFont font = ui->assetSearch->font();
     font.setPointSize(12);
@@ -349,8 +337,6 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
     QFontMetrics fm = QFontMetrics(ui->assetSearch->font());
     ui->assetSearch->setFixedHeight(fm.height()+ 5);
-    ui->assetSearch->setTextMargins(0,(-(fm.height() + 5) / 2), 0, 0);
-
 
     /** Setup the asset info grid labels and values */
     ui->assetInfoTitleLabel->setText("<b>" + tr("Asset Activation Status") + "</b>");
