@@ -15,6 +15,7 @@
 #include "platformstyle.h"
 #include "sendcoinsentry.h"
 #include "walletmodel.h"
+#include "guiconstants.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -25,6 +26,7 @@
 #include "policy/fees.h"
 #include "wallet/fees.h"
 
+#include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
 #include <QMessageBox>
 #include <QScrollBar>
@@ -108,6 +110,11 @@ SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *p
     ui->customFee->setValue(settings.value("nTransactionFee").toLongLong());
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
+
+    // Setup the coin control visuals and labels
+    setupCoinControl();
+    setupScrollView();
+    setupFeeControl();
 }
 
 void SendCoinsDialog::setClientModel(ClientModel *_clientModel)
@@ -195,6 +202,164 @@ SendCoinsDialog::~SendCoinsDialog()
     settings.setValue("fPayOnlyMinFee", ui->checkBoxMinimumFee->isChecked());
 
     delete ui;
+}
+
+void SendCoinsDialog::setupCoinControl()
+{
+    QFont labelTopFont;
+    labelTopFont.setFamily("Arial");
+    labelTopFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, 0.6);
+    labelTopFont.setPixelSize(18);
+    labelTopFont.setBold(true);
+
+    /** Update the coincontrol frame */
+    ui->frameCoinControl->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px; border: none;");
+    /** Create the shadow effects on the frames */
+
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(COLOR_SHADOW);
+    bodyShadow->setOffset(4.0);
+
+    ui->frameCoinControl->setGraphicsEffect(bodyShadow);
+
+    ui->labelCoinControlFeatures->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->labelCoinControlFeatures->setFont(labelTopFont);
+
+    QFont labelSubFont;
+    labelSubFont.setFamily("Arial");
+    labelSubFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.6);
+    labelSubFont.setPixelSize(14);
+    labelSubFont.setBold(true);
+
+    ui->labelCoinControlQuantityText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlQuantityText->setFont(labelSubFont);
+
+    ui->labelCoinControlAmountText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlAmountText->setFont(labelSubFont);
+
+    ui->labelCoinControlFeeText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlFeeText->setFont(labelSubFont);
+
+    ui->labelCoinControlAfterFeeText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlAfterFeeText->setFont(labelSubFont);
+
+    ui->labelCoinControlBytesText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlBytesText->setFont(labelSubFont);
+
+    ui->labelCoinControlLowOutputText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlLowOutputText->setFont(labelSubFont);
+
+    ui->labelCoinControlChangeText->setStyleSheet(COLOR_LABEL_STRING);
+    ui->labelCoinControlChangeText->setFont(labelSubFont);
+
+    ui->pushButtonCoinControl->setFixedHeight(20);
+    ui->pushButtonCoinControl->setFixedWidth(92);
+    ui->pushButtonCoinControl->setStyleSheet("QPushButton {color: black; border: 1px solid lightgray; border-radius: 10px; background-color: #fbfbfe; text-align:center; padding: 0px;} QPushButton:pressed { background-color: white;}");
+
+    // Align the other labels next to the input buttons to the text in the same height
+    ui->labelCoinControlAutomaticallySelected->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->labelCoinControlInsuffFunds->setStyleSheet("padding: 0px");
+    ui->labelCoinControlChangeLabel->setStyleSheet("padding: 0px");
+
+    // Align the Custom change address checkbox and lineedit
+    ui->lineEditCoinControlChange->setFixedHeight(21);
+    ui->lineEditCoinControlChange->setStyleSheet("border: 1px solid lightgray; padding: 0px");
+    ui->checkBoxCoinControlChange->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+}
+
+void SendCoinsDialog::setupScrollView()
+{
+    /** Update the scrollview*/
+    ui->scrollArea->setStyleSheet("QScrollArea{background-color: white; padding-top: 10px; padding-right: 5px; border: none;}");
+
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(COLOR_SHADOW);
+    bodyShadow->setOffset(4.0);
+
+    ui->scrollArea->setGraphicsEffect(bodyShadow);
+
+    ui->scrollArea->verticalScrollBar()->setStyleSheet(QString::fromUtf8("QScrollBar:vertical {"
+                                                                         "        width: 5px;"
+                                                                         "        margin: 10px 0 0 0;"
+                                                                         "}"
+                                                                         "QScrollBar::handle:vertical {"
+                                                                         "            height: 5px;"
+                                                                         "            background: #999999;"
+                                                                         "}"
+                                                                         "QScrollBar::add-line:vertical {"
+                                                                         "                        background: none;"
+                                                                         "                        height: 20px;"
+                                                                         "                        subcontrol-position: bottom;"
+                                                                         "                        subcontrol-origin: margin;"
+                                                                         "}"
+                                                                         "QScrollBar::sub-line:vertical {"
+                                                                         "                        background: none;"
+                                                                         "                        height: 20px;"
+                                                                         "                        subcontrol-position: top;"
+                                                                         "                        subcontrol-origin: margin;"
+                                                                         "}"
+
+    ));
+
+    // Add left spacing to the entries, so we can see the right side of the shadow effect
+    ui->entries->setContentsMargins(5,0,25,0);
+    ui->scrollAreaWidgetContents->setStyleSheet("background-color: white;");
+}
+
+void SendCoinsDialog::setupFeeControl()
+{
+    QFont labelSubFont;
+    labelSubFont.setFamily("Arial");
+    labelSubFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.6);
+    labelSubFont.setPixelSize(14);
+    labelSubFont.setBold(true);
+
+    /** Update the coincontrol frame */
+    ui->frameFee->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px; border: none;");
+    /** Create the shadow effects on the frames */
+
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(COLOR_SHADOW);
+    bodyShadow->setOffset(4.0);
+
+    ui->frameFee->setGraphicsEffect(bodyShadow);
+
+    ui->labelFeeHeadline->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->labelFeeHeadline->setFont(labelSubFont);
+
+    ui->labelFeeMinimized->setStyleSheet("padding: 0px");
+    ui->fallbackFeeWarningLabel->setStyleSheet("padding: 0px");
+
+    ui->buttonChooseFee->setFixedHeight(20);
+    ui->buttonChooseFee->setFixedWidth(92);
+    ui->buttonChooseFee->setStyleSheet("QPushButton {color: black; border: 1px solid lightgray; border-radius: 10px; background-color: #fbfbfe; text-align:center; padding: 0px;} QPushButton:pressed { background-color: white;}");
+
+    ui->buttonMinimizeFee->setFixedHeight(20);
+    ui->buttonMinimizeFee->setFixedWidth(92);
+    ui->buttonMinimizeFee->setStyleSheet("QPushButton {color: black; border: 1px solid lightgray; border-radius: 10px; background-color: #fbfbfe; text-align:center; padding: 0px;} QPushButton:pressed { background-color: white;}");
+
+    ui->labelSmartFee->setStyleSheet("padding: 0px");
+    ui->labelFeeEstimation->setStyleSheet("padding: 0px");
+    ui->labelSmartFee2->setStyleSheet("padding: 0px");
+    ui->labelSmartFee3->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->labelCustomPerKilobyte->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+
+    ui->radioSmartFee->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->radioCustomFee->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+
+    ui->customFee->setFixedHeight(21);
+    ui->customFee->setStyleSheet("border: 1px solid lightgray; padding: 0px");
+
+    ui->confTargetSelector->setFixedHeight(21);
+    ui->confTargetSelector->setStyleSheet("QComboBox {border: 1px solid lightgray; text-align:center; padding-left: 5px; padding-top: 0px; color: black; background-color: transparent; border-radius: 4px; selection-background-color: rgb(0, 85, 255);} QComboBox::item:selected {"
+                        "background-color: rgb(0, 85, 255); color: white;}");
+    ui->confTargetSelector->setFixedWidth(200);
+    ui->confTargetSelector->setMaxVisibleItems(10);
+    ui->confTargetSelector->setSizeAdjustPolicy(QComboBox::SizeAdjustPolicy::AdjustToContents);
+
 }
 
 void SendCoinsDialog::on_sendButton_clicked()

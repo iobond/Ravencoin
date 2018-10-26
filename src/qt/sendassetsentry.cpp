@@ -14,9 +14,11 @@
 #include "platformstyle.h"
 #include "walletmodel.h"
 #include "assetcontroldialog.h"
+#include "guiconstants.h"
 
 #include "wallet/coincontrol.h"
 
+#include <QGraphicsDropShadowEffect>
 #include <QApplication>
 #include <QClipboard>
 #include <validation.h>
@@ -67,6 +69,15 @@ SendAssetsEntry::SendAssetsEntry(const PlatformStyle *_platformStyle, const QStr
     ui->ownershipWarningMessage->hide();
 
     fShowAdministratorList = false;
+
+    this->setStyleSheet("background-color: white; padding-top: 10px; padding-right: 5px; border: none;");
+
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(COLOR_SHADOW);
+    bodyShadow->setOffset(4.0);
+
+    this->setGraphicsEffect(bodyShadow);
 }
 
 SendAssetsEntry::~SendAssetsEntry()

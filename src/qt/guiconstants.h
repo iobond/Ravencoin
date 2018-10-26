@@ -18,7 +18,8 @@ static const int STATUSBAR_ICONSIZE = 16;
 static const bool DEFAULT_SPLASHSCREEN = true;
 
 /* Invalid field background style */
-#define STYLE_INVALID "background:#FF8080"
+#define STYLE_INVALID "background:#FF8080; border: 1px solid lightgray; padding: 0px;"
+#define STYLE_VALID "border: 1px solid lightgray; padding: 0px;"
 
 /* Transaction list -- unconfirmed transaction */
 #define COLOR_UNCONFIRMED QColor(128, 128, 128)
@@ -44,6 +45,8 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 #define COLOR_LIGHT_BLUE QColor(81, 107, 194)
 /* Ravencoin asset text */
 #define COLOR_ASSET_TEXT QColor(255, 255, 255)
+/* Ravencoin shadow color */
+#define COLOR_SHADOW QColor(0, 0, 0, 46)
 /* Ravencoin label color */
 #define COLOR_LABEL_STRING "color: #4960ad"
 /* Tooltips longer than this (in characters) are converted into rich text,

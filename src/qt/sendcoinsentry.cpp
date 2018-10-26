@@ -12,7 +12,9 @@
 #include "optionsmodel.h"
 #include "platformstyle.h"
 #include "walletmodel.h"
+#include "guiconstants.h"
 
+#include <QGraphicsDropShadowEffect>
 #include <QApplication>
 #include <QClipboard>
 
@@ -49,6 +51,52 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_is, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_s, SIGNAL(clicked()), this, SLOT(deleteClicked()));
+
+    this->setStyleSheet("background-color: #faf9f6; padding-top: 10px; padding-right: 30px; border: none;");
+
+    QGraphicsDropShadowEffect *bodyShadow = new QGraphicsDropShadowEffect;
+    bodyShadow->setBlurRadius(9.0);
+    bodyShadow->setColor(COLOR_SHADOW);
+    bodyShadow->setOffset(4.0);
+
+    this->setGraphicsEffect(bodyShadow);
+
+    QFont labelSubFont;
+    labelSubFont.setFamily("Arial");
+    labelSubFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.6);
+    labelSubFont.setPixelSize(14);
+    labelSubFont.setBold(true);
+
+    ui->payToLabel->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->payToLabel->setFont(labelSubFont);
+
+    ui->labellLabel->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->labellLabel->setFont(labelSubFont);
+
+    ui->amountLabel->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->amountLabel->setFont(labelSubFont);
+
+    ui->messageLabel->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+    ui->messageLabel->setFont(labelSubFont);
+
+    // Update the textedit to have a border
+    ui->payTo->setFixedHeight(21);
+    ui->payTo->setStyleSheet("border: 1px solid lightgray; padding: 0px");
+
+    ui->addAsLabel->setFixedHeight(21);
+    ui->addAsLabel->setStyleSheet("border: 1px solid lightgray; padding: 0px");
+
+    ui->payAmount->setFixedHeight(21);
+    ui->payAmount->setStyleSheet("border: 1px solid lightgray; padding: 0px");
+
+    ui->checkboxSubtractFeeFromAmount->setStyleSheet(QString("padding: 0px; %1;").arg(COLOR_LABEL_STRING));
+
+    ui->addressBookButton->setStyleSheet("QToolButton{border: 1px solid lightgray; padding: 0px;} QToolButton:pressed {background-color: lightgray}");
+    ui->pasteButton->setStyleSheet("QToolButton{border: 1px solid lightgray; padding: 0px;} QToolButton:pressed {background-color: lightgray}");
+    ui->deleteButton->setStyleSheet("QToolButton{border: 1px solid lightgray; padding: 0px;} QToolButton:pressed {background-color: lightgray}");
+    ui->addressBookButton->setIconSize(QSize(22,22));
+
+
 }
 
 SendCoinsEntry::~SendCoinsEntry()
